@@ -31,7 +31,7 @@
 </header>
 
 <div class="summary-container">
-    <div class="kpi-card"><div>전체 재적</div><div class="kpi-value">162명</div></div>
+    <div class="kpi-card"><div>전체 재적</div><div class="kpi-value">157명</div></div>
     <div class="kpi-card"><div>주간 심방 (출결재적 137명 기준)</div><div class="kpi-value" id="kpi-week-visit">58건</div></div>
     <div class="kpi-card"><div>토요 전도단 (최근)</div><div class="kpi-value" id="kpi-evan" style="color:var(--yellow)">47명</div></div>
     <div class="kpi-card"><div>구역예배 평균 참석률</div><div class="kpi-value" id="kpi-cell" style="color:var(--blue)">38.5%</div></div>
