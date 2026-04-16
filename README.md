@@ -27,14 +27,14 @@
 
 <header>
     <div><strong>UNIVERSITY MINISTRY</strong> | 통합 모니터링 시스템</div>
-    <div><span class="live-tag">LIVE</span> 2026-04-04 갱신</div>
+    <div><span class="live-tag">LIVE</span> 2026-04-12 갱신 (4월 2째주)</div>
 </header>
 
 <div class="summary-container">
     <div class="kpi-card"><div>전체 재적</div><div class="kpi-value">157명</div></div>
-    <div class="kpi-card"><div>주간 심방 (출결재적 137명 기준)</div><div class="kpi-value" id="kpi-week-visit">58건</div></div>
+    <div class="kpi-card"><div>주간 심방 (출결재적 138명 기준)</div><div class="kpi-value" id="kpi-week-visit">58건</div></div>
     <div class="kpi-card"><div>토요 전도단 (최근)</div><div class="kpi-value" id="kpi-evan" style="color:var(--yellow)">47명</div></div>
-    <div class="kpi-card"><div>구역예배 평균 참석률</div><div class="kpi-value" id="kpi-cell" style="color:var(--blue)">38.5%</div></div>
+    <div class="kpi-card"><div>구역예배 평균 참석률</div><div class="kpi-value" id="kpi-cell" style="color:var(--blue)">33.3%</div></div>
 </div>
 
 <div class="main-container">
@@ -44,12 +44,12 @@
     </div>
 
     <div class="chart-box">
-        <h2>📞 구역별 심방 현황 (기존 데이터)</h2>
+        <h2>📞 구역별 심방 현황 (최신 데이터 반영)</h2>
         <canvas id="visitCombinedChart"></canvas>
     </div>
 
     <div class="chart-box">
-        <h2>📈 주차별 누적 심방 추이 (출결재적 137명 기준)</h2>
+        <h2>📈 주차별 누적 심방 추이 (출결재적 138명 기준)</h2>
         <canvas id="weeklyVisitChart"></canvas>
     </div>
 
@@ -61,34 +61,35 @@
 
 <script>
     // ==========================================
-    // 🛠️ 데이터 설정 영역 (여기 숫자만 수정하세요!)
+    // 🛠️ 데이터 설정 영역 (업데이트 완료!)
     // ==========================================
 
-    // [데이터 1] 구역예배 현황
-    const cellLabels = ['2구역', '3구역', '4구역', '5구역', '6구역', '7구역', '9구역', '10구역', '11구역', '12구역', '13구역', '14구역'];
-    const cellTotal = [11, 14, 9, 12, 11, 11, 11, 10, 8, 12, 11, 6];
-    const cellAttend = [4, 5, 2, 3, 4, 4, 2, 7, 3, 4, 6, 3];
-    const cellRates = cellAttend.map((attend, i) => ((attend / cellTotal[i]) * 100).toFixed(1)); // 참석률 자동 계산
+    // [데이터 1] 구역예배 현황 (4월 2째주 데이터)
+    const cellLabels = ['1구역', '2구역', '3구역', '4구역', '5구역', '6구역', '7구역', '8구역', '9구역', '10구역', '11구역', '12구역', '13구역', '14구역'];
+    const cellTotal = [7, 11, 12, 9, 12, 11, 11, 7, 11, 10, 8, 12, 11, 6]; // 출결재적 기준
+    const cellAttend = [1, 3, 0, 3, 4, 3, 5, 1, 3, 6, 4, 4, 5, 3];
+    const cellRates = cellAttend.map((attend, i) => ((attend / cellTotal[i]) * 100).toFixed(1));
 
-    // [데이터 2] 기존 심방 데이터
+    // [데이터 2] 구역별 심방 현황 (이미지 표 데이터 반영 완료)
     const visitLabels = ['1구역', '2구역', '3구역', '4구역', '5구역', '6구역', '7구역', '8구역', '9구역', '10구역', '11구역', '12구역', '13구역', '14구역'];
-    const visitCounts = [0, 4, 4, 3, 4, 4, 2, 0, 6, 6, 4, 4, 2, 3];
-    const visitRates = [0, 36, 29, 38, 33, 36, 18, 0, 55, 60, 50, 33, 18, 50];
+    const visitBase = [6, 11, 12, 9, 12, 11, 11, 7, 11, 10, 8, 12, 11, 6]; // 출결재적
+    const visitCounts = [0, 3, 5, 4, 5, 3, 3, 2, 5, 4, 4, 7, 3, 2]; // 심방 횟수
+    const visitRates = visitCounts.map((count, i) => ((count / visitBase[i]) * 100).toFixed(1)); // 심방률 자동 계산
 
-    // [데이터 3] 주간 누적 심방
+    // [데이터 3] 주간 누적 심방 (출결재적 138명 반영)
     const weekLabels = ['1주차', '2주차', '3주차', '4주차', '5주차'];
     const weekVisitCounts = [41, 48, 48, 58, 48];
-    const baseTarget = 137; // 출결재적
-    const weekVisitRates = weekVisitCounts.map(count => ((count / baseTarget) * 100).toFixed(1)); // 주간 심방률 자동 계산
+    const baseTarget = 138; 
+    const weekVisitRates = weekVisitCounts.map(count => ((count / baseTarget) * 100).toFixed(1));
 
-    // [데이터 4] 토요 전도단 출석
+    // [데이터 4] 토요 전도단 출석 (유지)
     const evanLabels = ['1주차', '2주차', '3주차', '4주차'];
     const evanOnTime = [0, 42, 44, 47];
     const evanLate = [0, 2, 1, 0];
 
 
     // ==========================================
-    // 🎨 차트 그리기 로직 (아래는 수정할 필요 없습니다)
+    // 🎨 차트 그리기 로직
     // ==========================================
     const commonOptions = {
         responsive: true,
@@ -98,7 +99,6 @@
         }
     };
 
-    // 1. 구역예배 차트 (막대 + 꺾은선)
     new Chart(document.getElementById('cellWorshipChart'), {
         type: 'bar',
         data: {
@@ -117,7 +117,6 @@
         }
     });
 
-    // 2. 기존 심방 차트 (막대 + 꺾은선)
     new Chart(document.getElementById('visitCombinedChart'), {
         type: 'bar',
         data: {
@@ -136,7 +135,6 @@
         }
     });
 
-    // 3. 주차별 심방 추이 차트 (꺾은선)
     new Chart(document.getElementById('weeklyVisitChart'), {
         type: 'line',
         data: {
@@ -155,14 +153,13 @@
         }
     });
 
-    // 4. 전도단 차트 (막대)
     new Chart(document.getElementById('evangelismChart'), {
         type: 'bar',
         data: {
             labels: evanLabels,
             datasets: [
-                { label: '정시 도착 (148명 기준)', data: evanOnTime, backgroundColor: 'rgba(251, 188, 5, 0.8)' },
-                { label: '사명자 지각 (33명 기준)', data: evanLate, backgroundColor: 'rgba(234, 67, 53, 0.8)' }
+                { label: '정시 도착', data: evanOnTime, backgroundColor: 'rgba(251, 188, 5, 0.8)' },
+                { label: '사명자 지각', data: evanLate, backgroundColor: 'rgba(234, 67, 53, 0.8)' }
             ]
         },
         options: commonOptions
