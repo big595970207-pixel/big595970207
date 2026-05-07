@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>대학부 종합 관제 대시보드 - 4월 3주차</title>
+    <title>대학부 종합 관제 대시보드 - 4월 4주차</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --neon: #00ff00; --blue: #4285F4; --yellow: #fbbc05; --red: #ea4335; }
@@ -24,24 +24,24 @@
 
 <header>
     <div><strong>UNIVERSITY MINISTRY</strong> | 통합 모니터링 시스템</div>
-    <div><span class="live-tag">LIVE</span> 2026-04-19 갱신 (4월 3주차)</div>
+    <div><span class="live-tag">LIVE</span> 2026-04-26 갱신 (4월 4주차)</div>
 </header>
 
 <div class="summary-container">
     <div class="kpi-card"><div>전체 재적</div><div class="kpi-value">157명</div></div>
-    <div class="kpi-card"><div>주간 심방 (출결재적 138명 기준)</div><div class="kpi-value" id="kpi-week-visit">62건</div></div>
+    <div class="kpi-card"><div>주간 심방 (출결재적 138명 기준)</div><div class="kpi-value" id="kpi-week-visit">51건</div></div>
     <div class="kpi-card"><div>토요 전도단 (미실시)</div><div class="kpi-value" id="kpi-evan" style="color:var(--yellow)">0명</div></div>
-    <div class="kpi-card"><div>구역예배 평균 참석률</div><div class="kpi-value" id="kpi-cell" style="color:var(--blue)">38.4%</div></div>
+    <div class="kpi-card"><div>구역예배 평균 참석률</div><div class="kpi-value" id="kpi-cell" style="color:var(--blue)">33.3%</div></div>
 </div>
 
 <div class="main-container">
     <div class="chart-box">
-        <h2>⛪ 구역예배 참석 현황 (4월 3주차)</h2>
+        <h2>⛪ 구역예배 참석 현황 (4월 4주차)</h2>
         <canvas id="cellWorshipChart"></canvas>
     </div>
 
     <div class="chart-box">
-        <h2>📞 구역별 심방 현황 (이미지 데이터 반영)</h2>
+        <h2>📞 구역별 심방 현황 (4월 4주차 반영 완료)</h2>
         <canvas id="visitCombinedChart"></canvas>
     </div>
 
@@ -51,37 +51,37 @@
     </div>
 
     <div class="chart-box">
-        <h2>🚩 토요 전도단 출석 현황 (4월 3주차 미실시)</h2>
+        <h2>🚩 토요 전도단 출석 현황</h2>
         <canvas id="evangelismChart"></canvas>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // 🛠️ 데이터 설정 영역 (4월 3주차 업데이트 완료)
+    // 🛠️ 데이터 설정 영역 (4월 4주차 업데이트 완료)
     // ==========================================
 
-    // [데이터 1] 구역예배 현황 (참석 53명 / 출결재적 138명)
+    // [데이터 1] 구역예배 현황 (참석 46명 / 출결재적 138명)
     const cellLabels = ['1구역', '2구역', '3구역', '4구역', '5구역', '6구역', '7구역', '8구역', '9구역', '10구역', '11구역', '12구역', '13구역', '14구역'];
     const cellTotal = [7, 11, 12, 9, 12, 11, 11, 7, 11, 10, 8, 12, 11, 6]; 
-    const cellAttend = [1, 3, 4, 5, 3, 3, 3, 0, 5, 8, 3, 4, 6, 4];
+    const cellAttend = [1, 3, 3, 3, 4, 3, 4, 1, 3, 6, 4, 3, 5, 3]; 
     const cellRates = cellAttend.map((attend, i) => ((attend / cellTotal[i]) * 100).toFixed(1));
 
-    // [데이터 2] 구역별 심방 현황 (이미지 추출 데이터)
-    const visitCounts = [0, 4, 6, 6, 5, 6, 4, 1, 7, 5, 4, 5, 7, 2]; 
+    // [데이터 2] 구역별 심방 현황 (💡 4주차 이미지 데이터 추출 반영)
+    const visitCounts = [0, 5, 5, 3, 6, 5, 3, 0, 4, 5, 4, 6, 3, 2]; 
     const visitBase = [6, 11, 12, 9, 12, 11, 11, 7, 11, 10, 8, 12, 11, 6];
     const visitRates = visitCounts.map((count, i) => ((count / visitBase[i]) * 100).toFixed(1)); 
 
     // [데이터 3] 주간 누적 심방 추이
-    const weekLabels = ['3월 4주차', '4월 1주차', '4월 2주차', '4월 3주차'];
-    const weekVisitCounts = [58, 50, 55, 62]; // 최신 62건 반영
+    const weekLabels = ['4월 1주차', '4월 2주차', '4월 3주차', '4월 4주차'];
+    const weekVisitCounts = [50, 55, 62, 51]; // 💡 4주차 총 심방 51건 반영
     const baseTarget = 138; 
     const weekVisitRates = weekVisitCounts.map(count => ((count / baseTarget) * 100).toFixed(1));
 
-    // [데이터 4] 토요 전도단 (4월 3주차 미실시로 0 처리)
-    const evanLabels = ['3월 4주차', '4월 1주차', '4월 2주차', '4월 3주차'];
-    const evanOnTime = [47, 40, 43, 0];
-    const evanLate = [0, 3, 2, 0];
+    // [데이터 4] 토요 전도단 
+    const evanLabels = ['4월 1주차', '4월 2주차', '4월 3주차', '4월 4주차'];
+    const evanOnTime = [40, 43, 0, 0]; // 💡 이번 주 전도단 미실시로 0 처리
+    const evanLate = [3, 2, 0, 0];
 
 
     // ==========================================
