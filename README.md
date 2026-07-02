@@ -2,164 +2,321 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>대학부 종합 관제 대시보드 - 4월 4주차</title>
+    <title>대학부 종합 대시보드</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --neon: #00ff00; --blue: #4285F4; --yellow: #fbbc05; --red: #ea4335; }
-        body { background-color: var(--bg); color: white; font-family: 'Pretendard', 'Arial', sans-serif; margin: 0; padding: 20px; }
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --neon: #58a6ff;
+            --highlight: #2ea043;
+            --warning: #d29922;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 20px;
+        }
+        h1, h2, h3 { color: #ffffff; text-align: center; }
         
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon); padding-bottom: 10px; margin-bottom: 20px; }
-        .live-tag { background: var(--neon); color: black; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        /* 상단 요약 박스 */
+        .summary-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .kpi-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .kpi-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--neon);
+            margin-top: 10px;
+        }
+        #total-score-val { color: var(--highlight); }
 
-        .summary-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .kpi-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: center; }
-        .kpi-value { font-size: 28px; font-weight: bold; color: var(--neon); margin-top: 5px; }
+        /* 섹션 컨테이너 */
+        .section-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .section-box h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-top: 0; }
 
-        .main-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .chart-box { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; position: relative; }
-        h2 { font-size: 16px; margin-top: 0; color: #8b949e; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        /* 테이블 공통 스타일 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        th { background-color: #21262d; color: #8b949e; }
+        .total-row { font-weight: bold; color: var(--neon); background-color: #21262d; }
+        
+        /* 막대 그래프 그리드 배열 */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .chart-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            height: 300px;
+            position: relative;
+        }
+        .chart-box h3 { margin-top: 0; font-size: 16px; color: #8b949e; margin-bottom: 10px; text-align: left;}
+
+        /* 추이 차트 컨테이너 */
+        .trend-chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <div><strong>UNIVERSITY MINISTRY</strong> | 통합 모니터링 시스템</div>
-    <div><span class="live-tag">LIVE</span> 2026-04-26 갱신 (4월 4주차)</div>
-</header>
+    <h1 id="dashboard-title">대학부 주간 종합 대시보드 (로딩중...)</h1>
 
-<div class="summary-container">
-    <div class="kpi-card"><div>전체 재적</div><div class="kpi-value">157명</div></div>
-    <div class="kpi-card"><div>주간 심방 (출결재적 138명 기준)</div><div class="kpi-value" id="kpi-week-visit">51건</div></div>
-    <div class="kpi-card"><div>토요 전도단 (미실시)</div><div class="kpi-value" id="kpi-evan" style="color:var(--yellow)">0명</div></div>
-    <div class="kpi-card"><div>구역예배 평균 참석률</div><div class="kpi-value" id="kpi-cell" style="color:var(--blue)">33.3%</div></div>
-</div>
-
-<div class="main-container">
-    <div class="chart-box">
-        <h2>⛪ 구역예배 참석 현황 (4월 4주차)</h2>
-        <canvas id="cellWorshipChart"></canvas>
+    <div class="summary-container">
+        <div class="kpi-card"><h3>총 재적</h3><div id="kpi-total" class="kpi-value">0명</div></div>
+        <div class="kpi-card"><h3>출결 제외</h3><div id="kpi-ex" class="kpi-value">0명</div></div>
+        <div class="kpi-card"><h3>출결 재적</h3><div id="kpi-att" class="kpi-value">0명</div></div>
+        <div class="kpi-card"><h3>이번주 전방부 총점</h3><div id="total-score-val" class="kpi-value">0점</div></div>
     </div>
 
-    <div class="chart-box">
-        <h2>📞 구역별 심방 현황 (4월 4주차 반영 완료)</h2>
-        <canvas id="visitCombinedChart"></canvas>
+    <div class="section-box">
+        <h2>📈 주차별 전방부 종합점수 추이</h2>
+        <div class="trend-chart-container">
+            <canvas id="trendChart"></canvas>
+        </div>
     </div>
 
-    <div class="chart-box">
-        <h2>📈 주차별 누적 심방 추이 (출결재적 138명 기준)</h2>
-        <canvas id="weeklyVisitChart"></canvas>
+    <div class="section-box">
+        <h2>🙏 이번주 예배 현황</h2>
+        <table id="worship-table">
+            <thead>
+                <tr>
+                    <th>구역</th>
+                    <th>현장 출석</th>
+                    <th>결석</th>
+                    <th>줌 예배</th>
+                </tr>
+            </thead>
+            <tbody id="worship-tbody"></tbody>
+        </table>
     </div>
 
-    <div class="chart-box">
-        <h2>🚩 토요 전도단 출석 현황</h2>
-        <canvas id="evangelismChart"></canvas>
+    <div class="section-box">
+        <h2>📊 항목별 구역 세부 지표 (건수 기준)</h2>
+        <div class="chart-grid" id="bar-charts-container">
+            </div>
     </div>
-</div>
 
-<script>
-    // ==========================================
-    // 🛠️ 데이터 설정 영역 (4월 4주차 업데이트 완료)
-    // ==========================================
+    <script>
+        // 🚨 여기에 구글 시트 '웹에 게시(CSV)' 링크를 꼭! 붙여넣으세요!
+        const sheetUrl = '여기에_복사한_구글시트_CSV_URL을_붙여넣으세요';
 
-    // [데이터 1] 구역예배 현황 (참석 46명 / 출결재적 138명)
-    const cellLabels = ['1구역', '2구역', '3구역', '4구역', '5구역', '6구역', '7구역', '8구역', '9구역', '10구역', '11구역', '12구역', '13구역', '14구역'];
-    const cellTotal = [7, 11, 12, 9, 12, 11, 11, 7, 11, 10, 8, 12, 11, 6]; 
-    const cellAttend = [1, 3, 3, 3, 4, 3, 4, 1, 3, 6, 4, 3, 5, 3]; 
-    const cellRates = cellAttend.map((attend, i) => ((attend / cellTotal[i]) * 100).toFixed(1));
+        const categories = [
+            { id: 'cat1', name: '외부 - 센터등록 (50점)', colIndex: 2, points: 50 },
+            { id: 'cat2', name: '외부 - 성공사례발표 (10점)', colIndex: 3, points: 10 },
+            { id: 'cat3', name: '내부 - 활동자 (1점)', colIndex: 4, points: 1 },
+            { id: 'cat4', name: '내부 - 섬김이 (5점)', colIndex: 5, points: 5 },
+            { id: 'cat5', name: '내부 - 신임사명자 양성 (20점)', colIndex: 6, points: 20 },
+            { id: 'cat6', name: '내부 - 타조직 발령 (100점)', colIndex: 7, points: 100 },
+            { id: 'cat7', name: '내부 - 성공사례발표 (10점)', colIndex: 8, points: 10 }
+        ];
 
-    // [데이터 2] 구역별 심방 현황 (💡 4주차 이미지 데이터 추출 반영)
-    const visitCounts = [0, 5, 5, 3, 6, 5, 3, 0, 4, 5, 4, 6, 3, 2]; 
-    const visitBase = [6, 11, 12, 9, 12, 11, 11, 7, 11, 10, 8, 12, 11, 6];
-    const visitRates = visitCounts.map((count, i) => ((count / visitBase[i]) * 100).toFixed(1)); 
+        // Chart.js 폰트 및 공통 색상 설정
+        Chart.defaults.color = '#8b949e';
+        Chart.defaults.borderColor = '#30363d';
 
-    // [데이터 3] 주간 누적 심방 추이
-    const weekLabels = ['4월 1주차', '4월 2주차', '4월 3주차', '4월 4주차'];
-    const weekVisitCounts = [50, 55, 62, 51]; // 💡 4주차 총 심방 51건 반영
-    const baseTarget = 138; 
-    const weekVisitRates = weekVisitCounts.map(count => ((count / baseTarget) * 100).toFixed(1));
+        async function fetchSheetData() {
+            try {
+                const response = await fetch(sheetUrl);
+                const data = await response.text();
+                
+                const rows = data.split('\n').map(row => row.trim()).filter(row => row.length > 0);
+                if (rows.length < 2) return;
 
-    // [데이터 4] 토요 전도단 
-    const evanLabels = ['4월 1주차', '4월 2주차', '4월 3주차', '4월 4주차'];
-    const evanOnTime = [40, 43, 0, 0]; // 💡 이번 주 전도단 미실시로 0 처리
-    const evanLate = [3, 2, 0, 0];
+                const weeklyData = {};
+                const weekLabels = [];
+                const weekScores = [];
 
+                rows.slice(1).forEach(row => {
+                    const cols = row.split(',');
+                    const week = cols[0].trim();
+                    if(!week) return;
 
-    // ==========================================
-    // 🎨 차트 그리기 로직 (Chart.js)
-    // ==========================================
-    const commonOptions = {
-        responsive: true,
-        plugins: { legend: { labels: { color: '#fff' } } },
-        scales: {
-            y: { beginAtZero: true, grid: { color: '#333' }, ticks: { color: '#ccc' } }
+                    if (!weeklyData[week]) {
+                        weeklyData[week] = [];
+                        weekLabels.push(week);
+                    }
+                    weeklyData[week].push(cols);
+                });
+
+                // 주차별 총점 계산 (추이 선 그래프용)
+                weekLabels.forEach(week => {
+                    let wScore = 0;
+                    weeklyData[week].forEach(cols => {
+                        categories.forEach(cat => {
+                            const count = parseInt(cols[cat.colIndex]) || 0;
+                            wScore += count * cat.points;
+                        });
+                    });
+                    weekScores.push(wScore);
+                });
+
+                // 1. 추이 차트 그리기
+                drawTrendChart(weekLabels, weekScores);
+
+                // 최신 주차 데이터 가져오기
+                const latestWeek = weekLabels[weekLabels.length - 1];
+                const latestRows = weeklyData[latestWeek];
+                
+                document.getElementById('dashboard-title').innerText = `대학부 종합 대시보드 (${latestWeek})`;
+
+                // 인원 KPI 업데이트
+                const firstRow = latestRows[0];
+                document.getElementById('kpi-total').innerText = (firstRow[9] || 0) + '명';
+                document.getElementById('kpi-ex').innerText = (firstRow[10] || 0) + '명';
+                document.getElementById('kpi-att').innerText = (firstRow[11] || 0) + '명';
+
+                let grandTotalScore = 0;
+                let worshipHtml = '';
+                let sumWorship = { att: 0, abs: 0, zoom: 0 };
+                
+                const groupNames = []; // 막대그래프 x축 라벨(구역명)
+                const categoryCounts = [[], [], [], [], [], [], []]; // 7개 카테고리별 데이터 배열
+
+                // 최신 주차 데이터 순회
+                latestRows.forEach(cols => {
+                    const groupName = cols[1];
+                    groupNames.push(groupName);
+
+                    let groupTotal = 0;
+                    categories.forEach((cat, idx) => {
+                        const count = parseInt(cols[cat.colIndex]) || 0;
+                        groupTotal += count * cat.points;
+                        categoryCounts[idx].push(count); // 그래프를 위해 '건수' 저장
+                    });
+                    grandTotalScore += groupTotal;
+
+                    // 예배 데이터 파싱
+                    const wAtt = parseInt(cols[12]) || 0;
+                    const wAbs = parseInt(cols[13]) || 0;
+                    const wZoom = parseInt(cols[14]) || 0;
+                    
+                    sumWorship.att += wAtt;
+                    sumWorship.abs += wAbs;
+                    sumWorship.zoom += wZoom;
+
+                    worshipHtml += `<tr>
+                        <td>${groupName}</td>
+                        <td style="color:var(--highlight);">${wAtt}</td>
+                        <td style="color:#f85149;">${wAbs}</td>
+                        <td style="color:var(--warning);">${wZoom}</td>
+                    </tr>`;
+                });
+
+                // 예배 현황 합계 줄 및 테이블 업데이트
+                worshipHtml += `<tr class="total-row">
+                    <td>합계</td>
+                    <td>${sumWorship.att}명</td>
+                    <td>${sumWorship.abs}명</td>
+                    <td>${sumWorship.zoom}명</td>
+                </tr>`;
+                document.getElementById('worship-tbody').innerHTML = worshipHtml;
+                document.getElementById('total-score-val').innerText = grandTotalScore + '점';
+
+                // 2. 7가지 항목별 막대 그래프 생성
+                const chartContainer = document.getElementById('bar-charts-container');
+                chartContainer.innerHTML = ''; // 초기화
+
+                categories.forEach((cat, idx) => {
+                    // 차트용 HTML 컨테이너 생성
+                    const chartDiv = document.createElement('div');
+                    chartDiv.className = 'chart-box';
+                    chartDiv.innerHTML = `<h3>${cat.name}</h3><canvas id="chart-${cat.id}"></canvas>`;
+                    chartContainer.appendChild(chartDiv);
+
+                    // Chart.js 막대그래프 그리기
+                    const ctx = document.getElementById(`chart-${cat.id}`).getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: groupNames, // 구역명 배열 (B열)
+                            datasets: [{
+                                label: '등록 건수',
+                                data: categoryCounts[idx], // 해당 카테고리의 구역별 건수 배열
+                                backgroundColor: 'rgba(88, 166, 255, 0.7)',
+                                hoverBackgroundColor: 'rgba(46, 160, 67, 0.8)', // 마우스 올렸을 때 초록색
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } }, // 범례 숨김 (제목이 있으므로)
+                            scales: {
+                                y: { beginAtZero: true, ticks: { stepSize: 1 } } // 건수이므로 1단위로 표시
+                            }
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('데이터 오류:', error);
+            }
         }
-    };
 
-    new Chart(document.getElementById('cellWorshipChart'), {
-        type: 'bar',
-        data: {
-            labels: cellLabels,
-            datasets: [
-                { label: '참석 인원 (명)', data: cellAttend, backgroundColor: 'rgba(0, 255, 0, 0.7)', order: 2 },
-                { label: '참석률 (%)', data: cellRates, type: 'line', borderColor: '#4285F4', borderWidth: 3, yAxisID: 'y1', order: 1 }
-            ]
-        },
-        options: {
-            scales: {
-                y: { grid: { color: '#333' }, ticks: { color: '#ccc' }, title: { display: true, text: '명', color: '#00ff00' } },
-                y1: { position: 'right', grid: { display: false }, ticks: { color: '#ccc' }, title: { display: true, text: '%', color: '#4285F4' } }
-            },
-            plugins: { legend: { labels: { color: '#fff' } } }
+        // 주차별 전방부 총점 추이 그래프 함수
+        function drawTrendChart(labels, data) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '전방부 총점',
+                        data: data,
+                        borderColor: '#2ea043',
+                        backgroundColor: 'rgba(46, 160, 67, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#2ea043',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
         }
-    });
 
-    new Chart(document.getElementById('visitCombinedChart'), {
-        type: 'bar',
-        data: {
-            labels: cellLabels,
-            datasets: [
-                { label: '심방 완료 건수', data: visitCounts, backgroundColor: 'rgba(66, 133, 244, 0.5)', order: 2 },
-                { label: '심방률 (%)', data: visitRates, type: 'line', borderColor: '#ea4335', borderWidth: 3, yAxisID: 'y1', order: 1 }
-            ]
-        },
-        options: {
-            scales: {
-                y: { grid: { color: '#333' }, ticks: { color: '#ccc' } },
-                y1: { position: 'right', grid: { display: false }, ticks: { color: '#ccc' } }
-            },
-            plugins: { legend: { labels: { color: '#fff' } } }
-        }
-    });
-
-    new Chart(document.getElementById('weeklyVisitChart'), {
-        type: 'line',
-        data: {
-            labels: weekLabels,
-            datasets: [
-                { label: '주차별 심방 건수', data: weekVisitCounts, borderColor: '#fbbc05', backgroundColor: '#fbbc05', tension: 0.3 },
-                { label: '심방률 (%)', data: weekVisitRates, borderColor: '#00ff00', borderDash: [5, 5], tension: 0.3, yAxisID: 'y1' }
-            ]
-        },
-        options: {
-            scales: {
-                y: { grid: { color: '#333' }, ticks: { color: '#ccc' } },
-                y1: { position: 'right', grid: { display: false }, ticks: { color: '#ccc' } }
-            },
-            plugins: { legend: { labels: { color: '#fff' } } }
-        }
-    });
-
-    new Chart(document.getElementById('evangelismChart'), {
-        type: 'bar',
-        data: {
-            labels: evanLabels,
-            datasets: [
-                { label: '정시 도착', data: evanOnTime, backgroundColor: 'rgba(251, 188, 5, 0.8)' },
-                { label: '지각/기타', data: evanLate, backgroundColor: 'rgba(234, 67, 53, 0.8)' }
-            ]
-        },
-        options: commonOptions
-    });
-</script>
+        window.onload = fetchSheetData;
+    </script>
 </body>
 </html>
