@@ -137,8 +137,8 @@
     </div>
 
     <script>
-        // 🚨 여기에 구글 시트 '웹에 게시(CSV)' 링크를 꼭 붙여넣으세요!
-        const sheetUrl = '여기에_복사한_구글시트_CSV_URL을_붙여넣으세요';
+        // 🚨 댝부님이 가져오신 구글 시트 CSV 링크 적용 완료!
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjhl42zs2Zd_xygVqvJ1Dwcls5YqU0YZU31sgqE2XeO_5LWodLkjjKkO-WmzLKeuja4Sriodynh59c/pub?output=csv';
 
         // 사용자가 요청한 시트 순서에 맞춘 인덱스 설정 (점수 있는 것만 6개)
         const categories = [
