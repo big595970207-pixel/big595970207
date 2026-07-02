@@ -13,6 +13,7 @@
             --neon: #58a6ff;
             --highlight: #2ea043;
             --warning: #d29922;
+            --accent: #a371f7;
         }
         body {
             background-color: var(--bg);
@@ -99,9 +100,9 @@
     <h1 id="dashboard-title">대학부 주간 종합 대시보드 (로딩중...)</h1>
 
     <div class="summary-container">
-        <div class="kpi-card"><h3>총 재적</h3><div id="kpi-total" class="kpi-value">0명</div></div>
-        <div class="kpi-card"><h3>출결 제외</h3><div id="kpi-ex" class="kpi-value">0명</div></div>
-        <div class="kpi-card"><h3>출결 재적</h3><div id="kpi-att" class="kpi-value">0명</div></div>
+        <div class="kpi-card"><h3>총 재적</h3><div class="kpi-value">158명</div></div>
+        <div class="kpi-card"><h3>출결 제외</h3><div class="kpi-value">22명</div></div>
+        <div class="kpi-card"><h3>출결 재적</h3><div class="kpi-value">136명</div></div>
         <div class="kpi-card"><h3>이번주 전방부 총점</h3><div id="total-score-val" class="kpi-value">0점</div></div>
     </div>
 
@@ -113,14 +114,16 @@
     </div>
 
     <div class="section-box">
-        <h2>🙏 이번주 예배 현황</h2>
+        <h2>🙏 이번주 예배 및 모임 현황</h2>
         <table id="worship-table">
             <thead>
                 <tr>
                     <th>구역</th>
-                    <th>현장 출석</th>
-                    <th>결석</th>
+                    <th>예배 참석</th>
                     <th>줌 예배</th>
+                    <th>결석</th>
+                    <th>심방률</th>
+                    <th>구역예배</th>
                 </tr>
             </thead>
             <tbody id="worship-tbody"></tbody>
@@ -128,26 +131,25 @@
     </div>
 
     <div class="section-box">
-        <h2>📊 항목별 구역 세부 지표 (건수 기준)</h2>
+        <h2>📊 평가 항목별 구역 세부 지표 (건수 기준)</h2>
         <div class="chart-grid" id="bar-charts-container">
             </div>
     </div>
 
     <script>
-        // 🚨 여기에 구글 시트 '웹에 게시(CSV)' 링크를 꼭! 붙여넣으세요!
+        // 🚨 여기에 구글 시트 '웹에 게시(CSV)' 링크를 꼭 붙여넣으세요!
         const sheetUrl = '여기에_복사한_구글시트_CSV_URL을_붙여넣으세요';
 
+        // 사용자가 요청한 시트 순서에 맞춘 인덱스 설정 (점수 있는 것만 6개)
         const categories = [
-            { id: 'cat1', name: '외부 - 센터등록 (50점)', colIndex: 2, points: 50 },
-            { id: 'cat2', name: '외부 - 성공사례발표 (10점)', colIndex: 3, points: 10 },
-            { id: 'cat3', name: '내부 - 활동자 (1점)', colIndex: 4, points: 1 },
-            { id: 'cat4', name: '내부 - 섬김이 (5점)', colIndex: 5, points: 5 },
-            { id: 'cat5', name: '내부 - 신임사명자 양성 (20점)', colIndex: 6, points: 20 },
-            { id: 'cat6', name: '내부 - 타조직 발령 (100점)', colIndex: 7, points: 100 },
-            { id: 'cat7', name: '내부 - 성공사례발표 (10점)', colIndex: 8, points: 10 }
+            { id: 'cat1', name: '센터등록 (50점)', colIndex: 5, points: 50 },
+            { id: 'cat2', name: '성공 사례발표 (10점)', colIndex: 6, points: 10 },
+            { id: 'cat3', name: '활동자 (1점)', colIndex: 7, points: 1 },
+            { id: 'cat4', name: '섬김이 (5점)', colIndex: 8, points: 5 },
+            { id: 'cat5', name: '신임사명자 양성 (20점)', colIndex: 9, points: 20 },
+            { id: 'cat6', name: '성공사례발표 (10점)', colIndex: 10, points: 10 }
         ];
 
-        // Chart.js 폰트 및 공통 색상 설정
         Chart.defaults.color = '#8b949e';
         Chart.defaults.borderColor = '#30363d';
 
@@ -165,7 +167,7 @@
 
                 rows.slice(1).forEach(row => {
                     const cols = row.split(',');
-                    const week = cols[0].trim();
+                    const week = cols[0] ? cols[0].trim() : '';
                     if(!week) return;
 
                     if (!weeklyData[week]) {
@@ -175,7 +177,7 @@
                     weeklyData[week].push(cols);
                 });
 
-                // 주차별 총점 계산 (추이 선 그래프용)
+                // 주차별 총점 계산
                 weekLabels.forEach(week => {
                     let wScore = 0;
                     weeklyData[week].forEach(cols => {
@@ -187,7 +189,7 @@
                     weekScores.push(wScore);
                 });
 
-                // 1. 추이 차트 그리기
+                // 선 그래프 그리기
                 drawTrendChart(weekLabels, weekScores);
 
                 // 최신 주차 데이터 가져오기
@@ -196,91 +198,88 @@
                 
                 document.getElementById('dashboard-title').innerText = `대학부 종합 대시보드 (${latestWeek})`;
 
-                // 인원 KPI 업데이트
-                const firstRow = latestRows[0];
-                document.getElementById('kpi-total').innerText = (firstRow[9] || 0) + '명';
-                document.getElementById('kpi-ex').innerText = (firstRow[10] || 0) + '명';
-                document.getElementById('kpi-att').innerText = (firstRow[11] || 0) + '명';
-
                 let grandTotalScore = 0;
                 let worshipHtml = '';
-                let sumWorship = { att: 0, abs: 0, zoom: 0 };
+                let sumWorship = { att: 0, zoom: 0, abs: 0 };
                 
-                const groupNames = []; // 막대그래프 x축 라벨(구역명)
-                const categoryCounts = [[], [], [], [], [], [], []]; // 7개 카테고리별 데이터 배열
+                const groupNames = []; 
+                const categoryCounts = [[], [], [], [], [], []]; 
 
-                // 최신 주차 데이터 순회
+                // 최신 데이터 순회
                 latestRows.forEach(cols => {
-                    const groupName = cols[1];
+                    const groupName = cols[1] ? cols[1].trim() : '-';
                     groupNames.push(groupName);
 
+                    // 총점 계산 (6개 지표)
                     let groupTotal = 0;
                     categories.forEach((cat, idx) => {
                         const count = parseInt(cols[cat.colIndex]) || 0;
                         groupTotal += count * cat.points;
-                        categoryCounts[idx].push(count); // 그래프를 위해 '건수' 저장
+                        categoryCounts[idx].push(count); 
                     });
                     grandTotalScore += groupTotal;
 
-                    // 예배 데이터 파싱
-                    const wAtt = parseInt(cols[12]) || 0;
-                    const wAbs = parseInt(cols[13]) || 0;
-                    const wZoom = parseInt(cols[14]) || 0;
+                    // 예배 및 심방 데이터 파싱 (인덱스 2, 3, 4 / 11, 12)
+                    const wAtt = parseInt(cols[2]) || 0;
+                    const wZoom = parseInt(cols[3]) || 0;
+                    const wAbs = parseInt(cols[4]) || 0;
+                    const visitRate = cols[11] ? cols[11].trim() : '-';
+                    const groupWorship = cols[12] ? cols[12].trim() : '-';
                     
                     sumWorship.att += wAtt;
-                    sumWorship.abs += wAbs;
                     sumWorship.zoom += wZoom;
+                    sumWorship.abs += wAbs;
 
                     worshipHtml += `<tr>
                         <td>${groupName}</td>
                         <td style="color:var(--highlight);">${wAtt}</td>
-                        <td style="color:#f85149;">${wAbs}</td>
                         <td style="color:var(--warning);">${wZoom}</td>
+                        <td style="color:#f85149;">${wAbs}</td>
+                        <td style="color:var(--accent);">${visitRate}</td>
+                        <td>${groupWorship}</td>
                     </tr>`;
                 });
 
-                // 예배 현황 합계 줄 및 테이블 업데이트
+                // 예배 현황 합계 업데이트
                 worshipHtml += `<tr class="total-row">
                     <td>합계</td>
                     <td>${sumWorship.att}명</td>
-                    <td>${sumWorship.abs}명</td>
                     <td>${sumWorship.zoom}명</td>
+                    <td>${sumWorship.abs}명</td>
+                    <td>-</td>
+                    <td>-</td>
                 </tr>`;
                 document.getElementById('worship-tbody').innerHTML = worshipHtml;
                 document.getElementById('total-score-val').innerText = grandTotalScore + '점';
 
-                // 2. 7가지 항목별 막대 그래프 생성
+                // 6가지 항목별 막대 그래프 생성
                 const chartContainer = document.getElementById('bar-charts-container');
-                chartContainer.innerHTML = ''; // 초기화
+                chartContainer.innerHTML = ''; 
 
                 categories.forEach((cat, idx) => {
-                    // 차트용 HTML 컨테이너 생성
                     const chartDiv = document.createElement('div');
                     chartDiv.className = 'chart-box';
                     chartDiv.innerHTML = `<h3>${cat.name}</h3><canvas id="chart-${cat.id}"></canvas>`;
                     chartContainer.appendChild(chartDiv);
 
-                    // Chart.js 막대그래프 그리기
                     const ctx = document.getElementById(`chart-${cat.id}`).getContext('2d');
                     new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: groupNames, // 구역명 배열 (B열)
+                            labels: groupNames, 
                             datasets: [{
-                                label: '등록 건수',
-                                data: categoryCounts[idx], // 해당 카테고리의 구역별 건수 배열
+                                label: '건수',
+                                data: categoryCounts[idx],
                                 backgroundColor: 'rgba(88, 166, 255, 0.7)',
-                                hoverBackgroundColor: 'rgba(46, 160, 67, 0.8)', // 마우스 올렸을 때 초록색
+                                hoverBackgroundColor: 'rgba(46, 160, 67, 0.8)',
                                 borderRadius: 4
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }, // 범례 숨김 (제목이 있으므로)
-                            scales: {
-                                y: { beginAtZero: true, ticks: { stepSize: 1 } } // 건수이므로 1단위로 표시
-                            }
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                         }
                     });
                 });
@@ -290,7 +289,6 @@
             }
         }
 
-        // 주차별 전방부 총점 추이 그래프 함수
         function drawTrendChart(labels, data) {
             const ctx = document.getElementById('trendChart').getContext('2d');
             new Chart(ctx, {
