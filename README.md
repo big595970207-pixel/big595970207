@@ -14,6 +14,8 @@
             --highlight: #2ea043;
             --warning: #d29922;
             --accent: #a371f7;
+            --gray: #8b949e;
+            --danger: #f85149;
         }
         body {
             background-color: var(--bg);
@@ -67,7 +69,7 @@
             text-align: center;
             border-bottom: 1px solid var(--border);
         }
-        th { background-color: #21262d; color: #8b949e; }
+        th { background-color: #21262d; color: var(--gray); }
         .total-row { font-weight: bold; color: var(--neon); background-color: #21262d; }
         
         /* 막대 그래프 그리드 배열 */
@@ -82,10 +84,25 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 15px;
-            height: 300px;
+            height: 330px; /* 높이 약간 조정 */
             position: relative;
         }
-        .chart-box h3 { margin-top: 0; font-size: 16px; color: #8b949e; margin-bottom: 10px; text-align: left;}
+        .chart-box h3 { 
+            margin-top: 0; 
+            font-size: 16px; 
+            color: var(--gray); 
+            margin-bottom: 15px; 
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delta-badge {
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+        }
 
         /* 추이 차트 컨테이너 */
         .trend-chart-container {
@@ -131,23 +148,21 @@
     </div>
 
     <div class="section-box">
-        <h2>📊 평가 항목별 구역 세부 지표 (건수 기준)</h2>
+        <h2>📊 평가 항목별 구역 세부 지표 (지난주 대비 증감)</h2>
         <div class="chart-grid" id="bar-charts-container">
             </div>
     </div>
 
     <script>
-        // 🚨 댝부님이 가져오신 구글 시트 CSV 링크 적용 완료!
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjhl42zs2Zd_xygVqvJ1Dwcls5YqU0YZU31sgqE2XeO_5LWodLkjjKkO-WmzLKeuja4Sriodynh59c/pub?output=csv';
 
-        // 사용자가 요청한 시트 순서에 맞춘 인덱스 설정 (점수 있는 것만 6개)
         const categories = [
-            { id: 'cat1', name: '센터등록 (50점)', colIndex: 5, points: 50 },
-            { id: 'cat2', name: '성공 사례발표 (10점)', colIndex: 6, points: 10 },
-            { id: 'cat3', name: '활동자 (1점)', colIndex: 7, points: 1 },
-            { id: 'cat4', name: '섬김이 (5점)', colIndex: 8, points: 5 },
-            { id: 'cat5', name: '신임사명자 양성 (20점)', colIndex: 9, points: 20 },
-            { id: 'cat6', name: '성공사례발표 (10점)', colIndex: 10, points: 10 }
+            { id: 'cat1', name: '센터등록', colIndex: 5, points: 50 },
+            { id: 'cat2', name: '성공 사례발표', colIndex: 6, points: 10 },
+            { id: 'cat3', name: '활동자', colIndex: 7, points: 1 },
+            { id: 'cat4', name: '섬김이', colIndex: 8, points: 5 },
+            { id: 'cat5', name: '신임사명자 양성', colIndex: 9, points: 20 },
+            { id: 'cat6', name: '성공사례발표', colIndex: 10, points: 10 }
         ];
 
         Chart.defaults.color = '#8b949e';
@@ -189,37 +204,58 @@
                     weekScores.push(wScore);
                 });
 
-                // 선 그래프 그리기
                 drawTrendChart(weekLabels, weekScores);
 
-                // 최신 주차 데이터 가져오기
-                const latestWeek = weekLabels[weekLabels.length - 1];
+                // 최신 주차 및 지난주 데이터 가져오기
+                const latestWeekIndex = weekLabels.length - 1;
+                const latestWeek = weekLabels[latestWeekIndex];
+                const prevWeek = latestWeekIndex > 0 ? weekLabels[latestWeekIndex - 1] : null;
+
                 const latestRows = weeklyData[latestWeek];
-                
+                const prevRows = prevWeek ? weeklyData[prevWeek] : [];
+
                 document.getElementById('dashboard-title').innerText = `대학부 종합 대시보드 (${latestWeek})`;
+
+                // 지난주 데이터를 구역별로 쉽게 찾기 위해 맵핑
+                const prevDataMap = {};
+                prevRows.forEach(cols => {
+                    const gName = cols[1] ? cols[1].trim() : '-';
+                    prevDataMap[gName] = cols;
+                });
 
                 let grandTotalScore = 0;
                 let worshipHtml = '';
                 let sumWorship = { att: 0, zoom: 0, abs: 0 };
                 
                 const groupNames = []; 
-                const categoryCounts = [[], [], [], [], [], []]; 
+                const categoryCounts = [[], [], [], [], [], []]; // 이번 주 데이터
+                const prevCategoryCounts = [[], [], [], [], [], []]; // 지난주 데이터
+                
+                // 전체 합계 및 증감 계산용
+                const catTotals = [0, 0, 0, 0, 0, 0];
+                const prevCatTotals = [0, 0, 0, 0, 0, 0];
 
-                // 최신 데이터 순회
                 latestRows.forEach(cols => {
                     const groupName = cols[1] ? cols[1].trim() : '-';
                     groupNames.push(groupName);
 
-                    // 총점 계산 (6개 지표)
+                    const prevCols = prevDataMap[groupName] || null;
+
                     let groupTotal = 0;
                     categories.forEach((cat, idx) => {
                         const count = parseInt(cols[cat.colIndex]) || 0;
+                        const prevCount = prevCols ? (parseInt(prevCols[cat.colIndex]) || 0) : 0;
+
                         groupTotal += count * cat.points;
+                        
                         categoryCounts[idx].push(count); 
+                        prevCategoryCounts[idx].push(prevCount);
+
+                        catTotals[idx] += count;
+                        prevCatTotals[idx] += prevCount;
                     });
                     grandTotalScore += groupTotal;
 
-                    // 예배 및 심방 데이터 파싱 (인덱스 2, 3, 4 / 11, 12)
                     const wAtt = parseInt(cols[2]) || 0;
                     const wZoom = parseInt(cols[3]) || 0;
                     const wAbs = parseInt(cols[4]) || 0;
@@ -234,13 +270,12 @@
                         <td>${groupName}</td>
                         <td style="color:var(--highlight);">${wAtt}</td>
                         <td style="color:var(--warning);">${wZoom}</td>
-                        <td style="color:#f85149;">${wAbs}</td>
+                        <td style="color:var(--danger);">${wAbs}</td>
                         <td style="color:var(--accent);">${visitRate}</td>
                         <td>${groupWorship}</td>
                     </tr>`;
                 });
 
-                // 예배 현황 합계 업데이트
                 worshipHtml += `<tr class="total-row">
                     <td>합계</td>
                     <td>${sumWorship.att}명</td>
@@ -252,14 +287,25 @@
                 document.getElementById('worship-tbody').innerHTML = worshipHtml;
                 document.getElementById('total-score-val').innerText = grandTotalScore + '점';
 
-                // 6가지 항목별 막대 그래프 생성
                 const chartContainer = document.getElementById('bar-charts-container');
                 chartContainer.innerHTML = ''; 
 
                 categories.forEach((cat, idx) => {
+                    const diff = catTotals[idx] - prevCatTotals[idx];
+                    let diffHtml = '';
+                    if (diff > 0) diffHtml = `<span style="color:var(--highlight);">▲ ${diff}</span>`;
+                    else if (diff < 0) diffHtml = `<span style="color:var(--danger);">▼ ${Math.abs(diff)}</span>`;
+                    else diffHtml = `<span style="color:var(--gray);">-</span>`;
+
                     const chartDiv = document.createElement('div');
                     chartDiv.className = 'chart-box';
-                    chartDiv.innerHTML = `<h3>${cat.name}</h3><canvas id="chart-${cat.id}"></canvas>`;
+                    chartDiv.innerHTML = `
+                        <h3>
+                            <span>${cat.name} (${cat.points}점)</span>
+                            <span class="delta-badge">총 ${catTotals[idx]}건 ${prevWeek ? `(${diffHtml})` : ''}</span>
+                        </h3>
+                        <canvas id="chart-${cat.id}"></canvas>
+                    `;
                     chartContainer.appendChild(chartDiv);
 
                     const ctx = document.getElementById(`chart-${cat.id}`).getContext('2d');
@@ -267,18 +313,27 @@
                         type: 'bar',
                         data: {
                             labels: groupNames, 
-                            datasets: [{
-                                label: '건수',
-                                data: categoryCounts[idx],
-                                backgroundColor: 'rgba(88, 166, 255, 0.7)',
-                                hoverBackgroundColor: 'rgba(46, 160, 67, 0.8)',
-                                borderRadius: 4
-                            }]
+                            datasets: [
+                                {
+                                    label: '지난주',
+                                    data: prevCategoryCounts[idx],
+                                    backgroundColor: 'rgba(139, 148, 158, 0.3)', // 회색 (지난주)
+                                    borderRadius: 4
+                                },
+                                {
+                                    label: '이번주',
+                                    data: categoryCounts[idx],
+                                    backgroundColor: 'rgba(88, 166, 255, 0.8)', // 파란색 (이번주)
+                                    borderRadius: 4
+                                }
+                            ]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
+                            plugins: { 
+                                legend: { display: true, position: 'bottom', labels: { boxWidth: 12 } } 
+                            },
                             scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                         }
                     });
