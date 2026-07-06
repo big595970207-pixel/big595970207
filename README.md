@@ -109,7 +109,7 @@
         // 2. 전방부 지표 설정 (점수 있음)
         const scoreCategories = [
             { id: 'cat1', name: '센터등록', colIndex: 5, points: 50 },
-            { id: 'cat2', name: '성공 사례발표', colIndex: 6, points: 10 },
+            { id: 'cat2', name: '실교사', colIndex: 6, points: 10 },
             { id: 'cat3', name: '활동자', colIndex: 7, points: 1 },
             { id: 'cat4', name: '섬김이', colIndex: 8, points: 5 },
             { id: 'cat5', name: '신임사명자 양성', colIndex: 9, points: 20 },
