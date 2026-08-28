@@ -70,8 +70,8 @@
 
     <div class="summary-container">
         <div class="kpi-card"><h3>총 재적</h3><div class="kpi-value">158명</div></div>
-        <div class="kpi-card"><h3>출결 제외</h3><div class="kpi-value">22명</div></div>
-        <div class="kpi-card"><h3>출결 재적</h3><div class="kpi-value">136명</div></div>
+        <div class="kpi-card"><h3>출결 제외</h3><div class="kpi-value">23명</div></div>
+        <div class="kpi-card"><h3>출결 재적</h3><div class="kpi-value">135명</div></div>
         <div class="kpi-card"><h3>이번주 전방부 총점</h3><div id="total-score-val" class="kpi-value">0점</div></div>
     </div>
 
