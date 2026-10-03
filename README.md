@@ -69,9 +69,9 @@
     <h1 id="dashboard-title">대학부 주간 종합 대시보드 (로딩중...)</h1>
 
     <div class="summary-container">
-        <div class="kpi-card"><h3>총 재적</h3><div class="kpi-value">158명</div></div>
+        <div class="kpi-card"><h3>총 재적</h3><div class="kpi-value">162명</div></div>
         <div class="kpi-card"><h3>출결 제외</h3><div class="kpi-value">23명</div></div>
-        <div class="kpi-card"><h3>출결 재적</h3><div class="kpi-value">135명</div></div>
+        <div class="kpi-card"><h3>출결 재적</h3><div class="kpi-value">139명</div></div>
         <div class="kpi-card"><h3>이번주 전방부 총점</h3><div id="total-score-val" class="kpi-value">0점</div></div>
     </div>
 
